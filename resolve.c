@@ -1647,7 +1647,7 @@ struct hostent* sip_resolvehost(str* name, unsigned short* port, int *proto,
 	){
 		/* we are lucky, this is an ip address */
 		if (proto && *proto==PROTO_NONE)
-			*proto = (is_sips)?PROTO_TLS:PROTO_UDP;
+			*proto = (is_sips)?PROTO_TLS:PROTO_TCP;
 		if (port && *port==0)
 			*port = (is_sips||((*proto)==PROTO_TLS))?SIPS_PORT:SIP_PORT;
 		return ip_addr2he(name,ip);
@@ -1659,7 +1659,7 @@ struct hostent* sip_resolvehost(str* name, unsigned short* port, int *proto,
 		LM_DBG("has port -> do A record lookup!\n");
 		/* set default PROTO if not set */
 		if (proto && *proto==PROTO_NONE)
-			*proto = (is_sips)?PROTO_TLS:PROTO_UDP;
+			*proto = (is_sips)?PROTO_TLS:PROTO_TCP;
 		goto do_a;
 	}
 
@@ -1704,7 +1704,7 @@ struct hostent* sip_resolvehost(str* name, unsigned short* port, int *proto,
 	}
 	LM_DBG("no valid NAPTR record found for %.*s," 
 		" trying direct SRV lookup...\n", name->len, name->s);
-	*proto = (is_sips)?PROTO_TLS:PROTO_UDP;
+	*proto = (is_sips)?PROTO_TLS:PROTO_TCP;
 
 do_srv:
 	if ((name->len+SRV_MAX_PREFIX_LEN+1)>MAX_DNS_NAME) {
@@ -1765,7 +1765,6 @@ err_proto:
 	return 0;
 }
 #endif
-
 
 
 struct hostent* sip_resolvehost( str* name, unsigned short* port,
@@ -1878,43 +1877,59 @@ do_srv:
 		goto do_a;
 	}
 
-	switch (*proto) {
-		case PROTO_UDP:
-			memcpy(tmp, SRV_UDP_PREFIX, SRV_UDP_PREFIX_LEN);
-			memcpy(tmp+SRV_UDP_PREFIX_LEN, name->s, name->len);
-			tmp[SRV_UDP_PREFIX_LEN + name->len] = '\0';
-			break;
-#ifdef USE_TCP
-		case PROTO_TCP:
-			if (tcp_disable) goto err_proto;
-			memcpy(tmp, SRV_TCP_PREFIX, SRV_TCP_PREFIX_LEN);
-			memcpy(tmp+SRV_TCP_PREFIX_LEN, name->s, name->len);
-			tmp[SRV_TCP_PREFIX_LEN + name->len] = '\0';
-			break;
-#endif
-#ifdef USE_TLS
-		case PROTO_TLS:
-			if (tls_disable) goto err_proto;
-			memcpy(tmp, SRV_TLS_PREFIX, SRV_TLS_PREFIX_LEN);
-			memcpy(tmp+SRV_TLS_PREFIX_LEN, name->s, name->len);
-			tmp[SRV_TLS_PREFIX_LEN + name->len] = '\0';
-			break;
-#endif
+
+
 #ifdef USE_SCTP
-		case PROTO_SCTP:
-			if (sctp_disable) goto err_proto;
-			memcpy(tmp, SRV_SCTP_PREFIX, SRV_SCTP_PREFIX_LEN);
-			memcpy(tmp+SRV_SCTP_PREFIX_LEN, name->s, name->len);
-			tmp[SRV_SCTP_PREFIX_LEN + name->len] = '\0';
-			break;
-#endif
-		default:
-			goto err_proto;
+	if (!sctp_disable) {
+	  memcpy(tmp, SRV_SCTP_PREFIX, SRV_SCTP_PREFIX_LEN);
+	  memcpy(tmp+SRV_SCTP_PREFIX_LEN, name->s, name->len);
+	  tmp[SRV_SCTP_PREFIX_LEN + name->len] = '\0';
 	}
 
 	he = do_srv_lookup( tmp, port, dn);
-	if (he)
-		return he;
+	if (he) {
+	  *proto = PROTO_SCTP;
+	  return he;
+	}
+#endif
+
+#ifdef USE_TLS
+	if (!tls_disable) {
+	  memcpy(tmp, SRV_TLS_PREFIX, SRV_TLS_PREFIX_LEN);
+	  memcpy(tmp+SRV_TLS_PREFIX_LEN, name->s, name->len);
+	  tmp[SRV_TLS_PREFIX_LEN + name->len] = '\0';
+	}
+
+	he = do_srv_lookup( tmp, port, dn);
+	if (he) {
+	  *proto = PROTO_TLS;
+	  return he;
+	}
+#endif
+
+#ifdef USE_TCP
+	if (!tcp_disable) {
+	  memcpy(tmp, SRV_TCP_PREFIX, SRV_TCP_PREFIX_LEN);
+	  memcpy(tmp+SRV_TCP_PREFIX_LEN, name->s, name->len);
+	  tmp[SRV_TCP_PREFIX_LEN + name->len] = '\0';
+	}
+
+	he = do_srv_lookup( tmp, port, dn);
+	if (he) {
+	  *proto = PROTO_TCP;
+	  return he;
+	}
+#endif
+
+	memcpy(tmp, SRV_UDP_PREFIX, SRV_UDP_PREFIX_LEN);
+	memcpy(tmp+SRV_UDP_PREFIX_LEN, name->s, name->len);
+	tmp[SRV_UDP_PREFIX_LEN + name->len] = '\0';
+
+	he = do_srv_lookup( tmp, port, dn);
+	if (he) {
+	  *proto = PROTO_UDP;
+	  return he;
+	}
 	
 	LM_DBG("no valid SRV record found for %s, trying A record lookup...\n",
 		tmp);
@@ -1931,9 +1946,6 @@ do_a:
 	tmp[name->len] = '\0';
 	he = resolvehost(tmp,1);
 	return he;
-err_proto:
-	LM_ERR("unsupported proto %d\n", *proto);
-	return 0;
 }
 
 
