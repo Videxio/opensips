@@ -1795,7 +1795,7 @@ struct hostent* sip_resolvehost( str* name, unsigned short* port,
 	){
 		/* we are lucky, this is an ip address */
 		if (proto && *proto==PROTO_NONE)
-			*proto = (is_sips)?PROTO_TLS:PROTO_UDP;
+			*proto = (is_sips)?PROTO_TLS:PROTO_TCP;
 		if (port && *port==0)
 			*port = (is_sips||((*proto)==PROTO_TLS))?SIPS_PORT:SIP_PORT;
 		return ip_addr2he(name,ip);
@@ -1807,7 +1807,7 @@ struct hostent* sip_resolvehost( str* name, unsigned short* port,
 		LM_DBG("has port -> do A record lookup!\n");
 		/* set default PROTO if not set */
 		if (proto && *proto==PROTO_NONE)
-			*proto = (is_sips)?PROTO_TLS:PROTO_UDP;
+			*proto = (is_sips)?PROTO_TLS:PROTO_TCP;
 		goto do_a;
 	}
 
@@ -1861,7 +1861,7 @@ struct hostent* sip_resolvehost( str* name, unsigned short* port,
 	}
 	LM_DBG("no valid NAPTR record found for %.*s," 
 		" trying direct SRV lookup...\n", name->len, name->s);
-	*proto = (is_sips)?PROTO_TLS:PROTO_UDP;
+	*proto = (is_sips)?PROTO_TLS:PROTO_TCP;
 
 do_srv:
 	if ((name->len+SRV_MAX_PREFIX_LEN+1)>MAX_DNS_NAME) {
