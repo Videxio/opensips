@@ -55,7 +55,7 @@
 #define TCP_MAIN_SELECT_TIMEOUT 5		/*!< how often "tcp main" checks for timeout*/
 #define TCP_CHILD_SELECT_TIMEOUT 2		/*!< the same as above but for children */
 
-#define TCP_CHILD_MAX_MSG_CHUNK	4		/*!< the max number of chunks that a child accepts
+#define TCP_CHILD_MAX_MSG_CHUNK	30		/*!< the max number of chunks that a child accepts
 										  until the message is read completely - anything
 										  above will lead to the connection being closed -
 										  considered an attack */
