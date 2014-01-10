@@ -1433,8 +1433,12 @@ endif
 
 #add libssl if needed
 ifneq ($(TLS),)
-DEFS+= -I$(LOCALBASE)/ssl/include -I$(LOCALBASE)/include -I$(SYSBASE)/include/openssl
-LIBS+= -L$(LOCALBASE)/lib -L$(LOCALBASE)/ssl/lib -lssl  -lcrypto
+#DEFS+= -I$(LOCALBASE)/ssl/include -I$(LOCALBASE)/include -I$(SYSBASE)/include/openssl
+#LIBS+= -L$(LOCALBASE)/lib -L$(LOCALBASE)/ssl/lib -lssl  -lcrypto
+SSLBASE = /home/videxio/openssl/openssl-1.0.1e/
+DEFS+= -DOPENSSL_NO_SSL2 -DOPENSSL_NO_COMP
+DEFS+= -I$(SSLBASE)/include/openssl -I$(LOCALBASE)/include 
+LIBS+= -L$(SSLBASE)/ -lssl  -lcrypto
 endif
 
 #add libsctp if needed
