@@ -46,8 +46,8 @@ char           *tls_ca_file   = TLS_CA_FILE;
 /* defaul cipher=0, this means the DEFAULT ciphers */
 char           *tls_ciphers_list = 0;
 /* TLS timeouts; should be low to detect problems fast */
-int             tls_handshake_timeout = 30;
-int             tls_send_timeout      = 30;
+int             tls_handshake_timeout = 6;
+int             tls_send_timeout      = 6;
 /* per default, the TLS domains do not have a name */
 int             tls_client_domain_avp = -1;
 
