@@ -1794,6 +1794,11 @@ struct hostent* sip_resolvehost( str* name, unsigned short* port,
 #endif
 	){
 		/* we are lucky, this is an ip address */
+ 		if (port && *port==0 && proto && *proto==PROTO_NONE) {
+			LM_INFO("vfr: ip addr and no proto, attempting TLS");
+			*proto = PROTO_TLS;
+			*port = SIPS_PORT;
+		}
 		if (proto && *proto==PROTO_NONE)
 			*proto = (is_sips)?PROTO_TLS:PROTO_TCP;
 		if (port && *port==0)
