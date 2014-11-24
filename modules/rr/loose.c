@@ -882,7 +882,8 @@ int loose_route(struct sip_msg* _m, char* _s1, char* _s2)
 		if (is_myself(&_m->parsed_uri.user, &_m->parsed_uri.host,
 		_m->parsed_uri.port_no) && !(_m->parsed_uri.gr.s && _m->parsed_uri.gr.len)) {
 #else
-		if (is_myself(&_m->parsed_uri.host, _m->parsed_uri.port_no) && !(_m->parsed_uri.gr.s && _m->parsed_uri.gr.len)) {
+		  //  // VIDEXIO: DO NOT STRICT ROUTE
+		if (0 && is_myself(&_m->parsed_uri.host, _m->parsed_uri.port_no) && !(_m->parsed_uri.gr.s && _m->parsed_uri.gr.len)) {
 #endif
 			return after_strict(_m);
 		} else {
